@@ -168,9 +168,8 @@ lh_test <- function(params, st = c(1, 0, 0, 0), return_ksi = F, dynamic = T) { #
 }
 
 
-results <- list()
 y <- data$Close
-x <- data$EconomicGrowth
+x <- data$CurrentSituation
   
   m <- mean(y)
   s <- sd(y)
@@ -185,7 +184,7 @@ x <- data$EconomicGrowth
   dynamic <- optim(dynamic$par, lh, hessian = TRUE)
   ksi_dynamic <- lh(dynamic$par, return_ksi = TRUE)
   
-  results_EG <- list(
+  results_CS <- list(
     dynamic = dynamic, 
     ksi_dynamic = ksi_dynamic,
     static = static,
@@ -208,40 +207,47 @@ x <- data$EconomicGrowth
   
   # formatting table (csv)
   
-
-  LM <- 2*(results_EG$static$value - results_EG$dynamic$value)
+format_table <- function(results, indicator){
+  
+  LM <- 2*(results$static$value - results$dynamic$value)
   p_val <- 1-pchisq(LM, 2)
   statistic <- paste0(format(round(LM, 3), nsmall = 3), stars(p_val))
   
-  par = c(results_EG$dynamic$par[5:10], results_EG$dynamic$par[1:4])
-  d <- diag(solve(results_EG$dynamic$hessian))
+  par = c(results$dynamic$par[5:10], results$dynamic$par[1:4])
+  d <- diag(solve(results$dynamic$hessian))
   d <- c(d[5:10], d[1:4])
   p_vals = 2*(1-pnorm(abs(par/(d^0.5))))
   str <- vector()
   for(i in 1:length(p_vals)){
     str[i] = stars(p_vals[i])
   }
-  #params = paste0(format(round(par, 3), nsmall = 3), str)
+  
   params = paste0(format(round(par, 3), nsmall = 3), 
                   " (", format(round(p_vals, 3), nsmall = 3), ")")
   
   row1 <- data.frame(
+    Indicator = indicator,
     LM = statistic, state = 'I',
     a = params[1], b = params[2], sigma = params[3],
     alpha = params[7], beta = params[8]
   )
   
   row2 <- data.frame(
+    Indicator = NA,
     LM = NA, state = 'II',
     a = params[4], b = params[5], sigma = params[6],
     alpha = params[9], beta = params[10]
   )
   
-  table_EG <- rbind(row1, row2)
+  return(rbind(row1, row2))
+}
+  
+table_CS <- format_table(results_CS, "Current Situation")
+table_Vol <- format_table(results_Vol, "Volume")
+table_EG <- format_table(results_EG, "Economic Growth")  
 
-  
-  
-  
+table_all <- rbind(table_EG, table_CS, table_Vol)
+
 
 # test the occurrence of two distinct 
 test_results <- list()
