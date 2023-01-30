@@ -1,0 +1,60 @@
+---
+title: "Koncepcja referatu na konferencję"
+author: "Agnieszka Choczyńska"
+date: '2023-01-30'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Motywacja i cel
+
+Istnieją różne podejścia do mierzenia sentymentu: w czynnikach bezpośrednich pytamy wprost o opinię (np. ZEW), w pośrednich próbujemy odgadnąć sentyment na podstawie zachowania inwestorów, rejestrowanego przez giełdę (np. wolumen). Wpływ poszczególnych czynników był już badany, ale niewiele zrobiono porównań pomiędzy nimi. A możemy też oczekiwać, że opinie (czynniki bezpośrednie) opierają się na zachowaniach inwestorów (pośrednie) lub na odwrót.
+
+Spodziewamy się, że:
+
+- wpływ ZEW jest istotny i pozytywny w jednym lub drugim stanie (z własnych badań)
+
+- czynnik pośredni może wpływać pozytywnie w dobrym stanie i negatywnie w złym (z Wanga)
+
+- zachowania i opinie wzajemnie na siebie wpływają (tu muszę zbudować literaturę)
+
+Cel: Zbadać zależności między różnymi czynnikami sentymentu (VAR), a następnie ich wpływ na giełdę (TVPMS), i w ten sposób przybliżyć się do ustalenia, w jaki sposób opinie i zachowania odbijają się na rynkach finansowych. Analizę robię dla Niemiec. VAR jest na miesięcznych danych. W TVPMS biorę dzienne notowania i wolumen, a ZEW duplikuję "schodkowo" jak w naszym artykule.
+
+
+## Jak różne czynniki sentymentu wpływają na siebie nawzajem
+
+
+
+
+
+## Jak wpływają na giełdę
+
+
+
+## Wyniki dla Polski
+
+
+
+## Do dyskusji
+
+Wady i zalety tego badania widzę tak:
+
++ Wyniki potwierdzają się z Wangiem, ale też zamykają pewną lukę między np. naszym badaniem a jego
+
++ Da się zbudować spójną narrację
+
++ Chyba dość nowe - choć muszę nadrobić literaturę, więc pewnie różne rzeczy wyjdą
+
++ Mógłby być dobrym punktem odniesienia pod dalsze badania sentymentów
+
+- Są dwa modele, co pewnie może rodzić wątpliwości, dlaczego nie wybieram innego podejścia
+
+- Jeden model jest na miesięcznych, drugi na dziennych danych. Tu mogę jeszcze popracować, ale na razie dzienne ZEWy wychodziły mi niestacjonarne, co przeszkadzało w VAR, a TVPMS nie wychodził dla miesięcznego wolumenu
+
+
+
+
+
