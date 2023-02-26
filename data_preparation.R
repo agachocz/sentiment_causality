@@ -73,3 +73,14 @@ summary(model_PL)
 VARselect(monthly_data[,-c(1,2,3,5)], lag.max = 15, type="const")
 model_GER <- VAR(monthly_data[,-c(1,2,3,5)], p = 2, type = "const")
 summary(model_GER)
+
+# both
+VARselect(monthly_data[,-c(1,2,3)], lag.max = 15, type="const")
+model <- VAR(monthly_data[,-c(1,2,3)], p = 2, type = "const")
+summary(model)
+
+
+feir <- irf(model_GER,
+            n.ahead = 5, ortho = T, runs = 1000)
+
+plot(feir)
