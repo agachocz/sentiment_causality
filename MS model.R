@@ -168,8 +168,8 @@ lh_test <- function(params, st = c(1, 0, 0, 0), return_ksi = F, dynamic = T) { #
 }
 
 
-y <- data$Close
-x <- data$CurrentSituation
+y <- daily_data$WIG
+x <- daily_data$EconomicGrowth
   
   m <- mean(y)
   s <- sd(y)
@@ -184,7 +184,7 @@ x <- data$CurrentSituation
   dynamic <- optim(dynamic$par, lh, hessian = TRUE)
   ksi_dynamic <- lh(dynamic$par, return_ksi = TRUE)
   
-  results_CS <- list(
+  results_EG_PL <- list(
     dynamic = dynamic, 
     ksi_dynamic = ksi_dynamic,
     static = static,
@@ -242,11 +242,11 @@ format_table <- function(results, indicator){
   return(rbind(row1, row2))
 }
   
-table_CS <- format_table(results_CS, "Current Situation")
-table_Vol <- format_table(results_Vol, "Volume")
-table_EG <- format_table(results_EG, "Economic Growth")  
+table_CS <- format_table(results_CS_PL, "Current Situation")
+table_Vol <- format_table(results_Vol_PL, "Volume")
+table_EG <- format_table(results_EG_PL, "Economic Growth")  
 
-table_all <- rbind(table_EG, table_CS, table_Vol)
+table_all_PL <- rbind(table_EG, table_CS, table_Vol)
 
 
 # test the occurrence of two distinct 
