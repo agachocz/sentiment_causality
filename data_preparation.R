@@ -1,4 +1,5 @@
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(tseries)
 library(vars)
@@ -53,12 +54,25 @@ daily_data <- full_join(daily_stocks, zew_daily, by = "Date") %>%
   slice(-1) %>% filter(across(everything(), complete.cases))
 
 monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>% 
-  dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation) %>%
+  dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation,
+                Inflation, STOXX50, InterestRate) %>%
   mutate(DAX = log(DAX/lag(DAX)), WIG = log(WIG/lag(WIG)),
          Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/1000000) %>%
   slice(-1) %>% filter(across(everything(), complete.cases))
 
-adf.test(monthly_data$EconomicGrowth) # stationary
+monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>% 
+  dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation,
+                Inflation, STOXX50, InterestRate) %>%
+  mutate(DAX = log(DAX/lag(DAX)), WIG = log(WIG/lag(WIG)),
+         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/1000000,
+         EG = EconomicGrowth-lag(EconomicGrowth),
+         CS = CurrentSituation - lag(CurrentSituation),
+         Infl = Inflation - lag(Inflation),
+         STOXX50 = STOXX50 - lag(STOXX50),
+         Rate = InterestRate - lag(InterestRate)) %>%
+  slice(-1) %>% filter(across(everything(), complete.cases))
+
+adf.test(monthly_data$CS) # stationary
 adf.test(monthly_data$Vol_GER)
 adf.test(monthly_data$Vol_PL)
 adf.test(monthly_data$CurrentSituation)
@@ -84,3 +98,26 @@ feir <- irf(model_GER,
             n.ahead = 5, ortho = T, runs = 1000)
 
 plot(feir)
+
+
+# VAR for sentiment indicators
+VARselect(monthly_data[,c(2,4,9,12)], lag.max = 15, type="const")
+model <- VAR(monthly_data[,c(2,4,9,12)], p = 2, type = "const")
+summary(model)
+
+feir <- irf(model, n.ahead = 10, ortho = F, runs = 10000)
+
+plot(feir)
+
+# ZEW plot
+monthly_data %>% dplyr::select(Date, EconomicGrowth, CurrentSituation, Inflation,
+                        STOXX50, InterestRate) %>% 
+  pivot_longer(-Date) %>% ggplot(aes(x = Date, y = value, col = name)) + geom_line()
+
+
+
+
+# check if volume impacts DAX with daily data
+VARselect(daily_data[,c(2,4)], lag.max = 15, type="const")
+model <- VAR(monthly_data[,c(2,4)], p = 15, type = "const")
+summary(model)
