@@ -64,7 +64,7 @@ monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>%
   dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation,
                 Inflation, STOXX50, InterestRate) %>%
   mutate(DAX = log(DAX/lag(DAX)), WIG = log(WIG/lag(WIG)),
-         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/1000000,
+         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/10000000,
          EG = EconomicGrowth-lag(EconomicGrowth),
          CS = CurrentSituation - lag(CurrentSituation),
          Infl = Inflation - lag(Inflation),
@@ -99,15 +99,38 @@ feir <- irf(model_GER,
 
 plot(feir)
 
-
 # VAR for sentiment indicators
-VARselect(monthly_data[,c(2,4,9,12)], lag.max = 15, type="const")
-model <- VAR(monthly_data[,c(2,4,9,12)], p = 2, type = "const")
+VARselect(monthly_data[,c(2:5,9,11:12)], lag.max = 15, type="const")
+model <- VAR(monthly_data[,c(2:5,9,11:12)], p = 2, type = "const")
 summary(model)
+
+coeffs <- coefficients(model)
+coeffs_table <- cbind(DAX = coeffs$DAX[,1], WIG = coeffs$WIG[,1], 
+                      Vol_GER = coeffs$Vol_GER[,1], Vol_PL = coeffs$Vol_PL[,1],
+                      STOXX50 = coeffs$STOXX50[,1], EG = coeffs$EG[,1], CS = coeffs$CS[,1])
+write.csv(round(coeffs_table, 5), "coeff_table.csv")
+
+2*pnorm(coeffs$DAX[,1]/coeffs$DAX[,2], lower.tail = F)
+
+library(lmtest)
+coeftest(model, vcov = vcovHC)
+
+2*(1-pnorm(0.0012708/0.00060369))
+
+plot(model)
+normality.test(model, multivariate.only = T) # nie przechodzi
+arch.test(model) # heteroskedastyczność
+serial.test(model) # przechodzi
 
 feir <- irf(model, n.ahead = 10, ortho = F, runs = 10000)
 
 plot(feir)
+
+# Granger
+
+causality(model, cause = "Vol_PL")
+
+
 
 # ZEW plot
 monthly_data %>% dplyr::select(Date, EconomicGrowth, CurrentSituation, Inflation,
