@@ -64,7 +64,7 @@ monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>%
   dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation,
                 Inflation, STOXX50, InterestRate) %>%
   mutate(DAX = log(DAX/lag(DAX)), WIG = log(WIG/lag(WIG)),
-         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/1000000,
+         Vol_GER = (Vol_GER-lag(Vol_GER))/1000000, Vol_PL = (Vol_PL-lag(Vol_PL))/1000000,
          EG = EconomicGrowth-lag(EconomicGrowth),
          CS = CurrentSituation - lag(CurrentSituation),
          Infl = Inflation - lag(Inflation),
@@ -101,8 +101,8 @@ plot(feir)
 
 
 # VAR for sentiment indicators
-VARselect(monthly_data[,c(2,4,9,12)], lag.max = 15, type="const")
-model <- VAR(monthly_data[,c(2,4,9,12)], p = 2, type = "const")
+VARselect(monthly_data[,c(4:5,9,11,12)], lag.max = 15, type="const")
+model <- VAR(monthly_data[,c(4:5,9,11,12)], p = 2, type = "const")
 summary(model)
 
 feir <- irf(model, n.ahead = 10, ortho = F, runs = 10000)
