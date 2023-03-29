@@ -70,7 +70,9 @@ monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>%
          Infl = Inflation - lag(Inflation),
          STOXX50 = STOXX50 - lag(STOXX50),
          Rate = InterestRate - lag(InterestRate)) %>%
-  slice(-1) %>% filter(across(everything(), complete.cases))
+  slice(-1) %>% filter(across(everything(), complete.cases)) %>%
+  mutate(Crisis = if_else(between(Date, as.Date("2008-08-01"), as.Date("2014-01-01")) |
+                            Date > as.Date("2020-03-01"), 1, 0))
 
 adf.test(monthly_data$CS) # stationary
 adf.test(monthly_data$Vol_GER)
@@ -113,16 +115,24 @@ write.csv(round(coeffs_table, 5), "coeff_table.csv")
 2*pnorm(coeffs$DAX[,1]/coeffs$DAX[,2], lower.tail = F)
 
 library(lmtest)
-coeftest(model, vcov = vcovHC)
+nw <- NeweyWest(model, lag = 2)
+cftest <- coeftest(model, vcov = nw)
 
-2*(1-pnorm(0.0012708/0.00060369))
+
+(2*(1-pnorm(abs(cftest[,1]/cftest[,2])))<=0.1)
+2*(1-pt(0.0012708/0.00060369, df = 212))
+
+res <- residuals(model)
+
+plot(x = monthly_data$Date[-c(1:2)], y = res[,7], type = "l")
 
 plot(model)
 normality.test(model, multivariate.only = T) # nie przechodzi
 arch.test(model) # heteroskedastyczność
 serial.test(model) # przechodzi
 
-feir <- irf(model, n.ahead = 10, ortho = F, runs = 10000)
+feir <- irf(model, impulse = "CS", response = "STOXX50",
+            n.ahead = 10, ortho = F, runs = 10000, ci = 0.9)
 
 plot(feir)
 
