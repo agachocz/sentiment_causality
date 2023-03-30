@@ -118,6 +118,8 @@ library(lmtest)
 nw <- NeweyWest(model, lag = 2)
 cftest <- coeftest(model, vcov = nw)
 
+causality(model, cause = "STOXX50", vcov. = nw)
+
 
 (2*(1-pnorm(abs(cftest[,1]/cftest[,2])))<=0.1)
 2*(1-pt(0.0012708/0.00060369, df = 212))
@@ -132,13 +134,13 @@ arch.test(model) # heteroskedastyczność
 serial.test(model) # przechodzi
 
 feir <- irf(model, impulse = "CS", response = "STOXX50",
-            n.ahead = 10, ortho = F, runs = 10000, ci = 0.9)
+            n.ahead = 10, ortho = F, runs = 10000, ci = 0.9, cumulative = T)
 
 plot(feir)
 
 # Granger
 
-causality(model, cause = "Vol_PL")
+causality(model, cause = "CS")
 
 
 
@@ -151,6 +153,15 @@ monthly_data %>% dplyr::select(Date, EconomicGrowth, CurrentSituation, Inflation
 
 
 # check if volume impacts DAX with daily data
-VARselect(daily_data[,c(2,4)], lag.max = 15, type="const")
-model <- VAR(monthly_data[,c(2,4)], p = 15, type = "const")
+VARselect(daily_data[,c(2,4)], lag.max = 30, type="const")
+model <- VAR(monthly_data[,c(2,4)], p = 29, type = "const")
 summary(model)
+
+arch.test(model)
+serial.test(model)
+Box.test(residuals(model)[,3])
+causality(model, cause = "DAX")
+
+
+# impact of volume on DAX and WIG
+
