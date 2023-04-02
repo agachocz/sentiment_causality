@@ -153,15 +153,15 @@ monthly_data %>% dplyr::select(Date, EconomicGrowth, CurrentSituation, Inflation
 
 
 # check if volume impacts DAX with daily data
-VARselect(daily_data[,c(2,4)], lag.max = 30, type="const")
-model <- VAR(monthly_data[,c(2,4)], p = 29, type = "const")
+VARselect(daily_data[2000:4764,c(3,5)], lag.max = 30, type="const")
+model <- VAR(daily_data[2000:4764,c(3,5)], p = 17, type = "const")
 summary(model)
 
 arch.test(model)
 serial.test(model)
 Box.test(residuals(model)[,3])
-causality(model, cause = "DAX")
+causality(model, cause = "Vol_PL")
 
-
+plot(daily_data$Vol_PL, type = "l")
 # impact of volume on DAX and WIG
 
