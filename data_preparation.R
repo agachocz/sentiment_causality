@@ -64,13 +64,19 @@ monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>%
   dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation,
                 Inflation, STOXX50, InterestRate) %>%
   mutate(DAX = log(DAX/lag(DAX)), WIG = log(WIG/lag(WIG)),
+<<<<<<< HEAD
          Vol_GER = (Vol_GER-lag(Vol_GER))/1000000, Vol_PL = (Vol_PL-lag(Vol_PL))/1000000,
+=======
+         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/10000000,
+>>>>>>> 1aafd61c5f828869fbe4f727bcd7e30b6bc158b7
          EG = EconomicGrowth-lag(EconomicGrowth),
          CS = CurrentSituation - lag(CurrentSituation),
          Infl = Inflation - lag(Inflation),
          STOXX50 = STOXX50 - lag(STOXX50),
          Rate = InterestRate - lag(InterestRate)) %>%
-  slice(-1) %>% filter(across(everything(), complete.cases))
+  slice(-1) %>% filter(across(everything(), complete.cases)) %>%
+  mutate(Crisis = if_else(between(Date, as.Date("2008-08-01"), as.Date("2014-01-01")) |
+                            Date > as.Date("2020-03-01"), 1, 0))
 
 adf.test(monthly_data$CS) # stationary
 adf.test(monthly_data$Vol_GER)
@@ -99,15 +105,53 @@ feir <- irf(model_GER,
 
 plot(feir)
 
-
 # VAR for sentiment indicators
+<<<<<<< HEAD
 VARselect(monthly_data[,c(4:5,9,11,12)], lag.max = 15, type="const")
 model <- VAR(monthly_data[,c(4:5,9,11,12)], p = 2, type = "const")
+=======
+VARselect(monthly_data[,c(2:5,9,11:12)], lag.max = 15, type="const")
+model <- VAR(monthly_data[,c(2:5,9,11:12)], p = 2, type = "const")
+>>>>>>> 1aafd61c5f828869fbe4f727bcd7e30b6bc158b7
 summary(model)
 
-feir <- irf(model, n.ahead = 10, ortho = F, runs = 10000)
+coeffs <- coefficients(model)
+coeffs_table <- cbind(DAX = coeffs$DAX[,1], WIG = coeffs$WIG[,1], 
+                      Vol_GER = coeffs$Vol_GER[,1], Vol_PL = coeffs$Vol_PL[,1],
+                      STOXX50 = coeffs$STOXX50[,1], EG = coeffs$EG[,1], CS = coeffs$CS[,1])
+write.csv(round(coeffs_table, 5), "coeff_table.csv")
+
+2*pnorm(coeffs$DAX[,1]/coeffs$DAX[,2], lower.tail = F)
+
+library(lmtest)
+nw <- NeweyWest(model, lag = 2)
+cftest <- coeftest(model, vcov = nw)
+
+causality(model, cause = "STOXX50", vcov. = nw)
+
+
+(2*(1-pnorm(abs(cftest[,1]/cftest[,2])))<=0.1)
+2*(1-pt(0.0012708/0.00060369, df = 212))
+
+res <- residuals(model)
+
+plot(x = monthly_data$Date[-c(1:2)], y = res[,7], type = "l")
+
+plot(model)
+normality.test(model, multivariate.only = T) # nie przechodzi
+arch.test(model) # heteroskedastyczność
+serial.test(model) # przechodzi
+
+feir <- irf(model, impulse = "CS", response = "STOXX50",
+            n.ahead = 10, ortho = F, runs = 10000, ci = 0.9, cumulative = T)
 
 plot(feir)
+
+# Granger
+
+causality(model, cause = "CS")
+
+
 
 # ZEW plot
 monthly_data %>% dplyr::select(Date, EconomicGrowth, CurrentSituation, Inflation,
@@ -118,6 +162,15 @@ monthly_data %>% dplyr::select(Date, EconomicGrowth, CurrentSituation, Inflation
 
 
 # check if volume impacts DAX with daily data
-VARselect(daily_data[,c(2,4)], lag.max = 15, type="const")
-model <- VAR(monthly_data[,c(2,4)], p = 15, type = "const")
+VARselect(daily_data[2000:4764,c(3,5)], lag.max = 30, type="const")
+model <- VAR(daily_data[2000:4764,c(3,5)], p = 17, type = "const")
 summary(model)
+
+arch.test(model)
+serial.test(model)
+Box.test(residuals(model)[,3])
+causality(model, cause = "Vol_PL")
+
+plot(daily_data$Vol_PL, type = "l")
+# impact of volume on DAX and WIG
+
