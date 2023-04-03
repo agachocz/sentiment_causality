@@ -57,7 +57,7 @@ monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>%
   dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation,
                 Inflation, STOXX50, InterestRate) %>%
   mutate(DAX = log(DAX/lag(DAX)), WIG = log(WIG/lag(WIG)),
-         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/1000000) %>%
+         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/10000000) %>%
   slice(-1) %>% filter(across(everything(), complete.cases))
 
 monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>% 
@@ -103,7 +103,7 @@ plot(feir)
 
 # VAR for sentiment indicators
 VARselect(monthly_data[,c(2:5,9,11:12)], lag.max = 15, type="const")
-model <- VAR(monthly_data[,c(2:5,9,11:12)], p = 2, type = "const")
+model <- vars::VAR(monthly_data[,c(2:5,9,11:12)], p = 2, type = "const")
 summary(model)
 
 coeffs <- coefficients(model)
@@ -120,6 +120,7 @@ cftest <- coeftest(model, vcov = nw)
 
 causality(model, cause = "STOXX50", vcov. = nw)
 
+granger_causality(model)
 
 (2*(1-pnorm(abs(cftest[,1]/cftest[,2])))<=0.1)
 2*(1-pt(0.0012708/0.00060369, df = 212))
@@ -153,14 +154,17 @@ monthly_data %>% dplyr::select(Date, EconomicGrowth, CurrentSituation, Inflation
 
 
 # check if volume impacts DAX with daily data
-VARselect(daily_data[2000:4764,c(3,5)], lag.max = 30, type="const")
-model <- VAR(daily_data[2000:4764,c(3,5)], p = 17, type = "const")
+VARselect(daily_data[,c(2:5)], lag.max = 30, type="const")
+model <- VAR(daily_data[,c(2:5)], p = 19, type = "const")
 summary(model)
 
 arch.test(model)
 serial.test(model)
 Box.test(residuals(model)[,3])
-causality(model, cause = "Vol_PL")
+
+library(bruceR)
+granger <- granger_causality(model)
+granger$result
 
 plot(daily_data$Vol_PL, type = "l")
 # impact of volume on DAX and WIG
