@@ -57,7 +57,7 @@ monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>%
   dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation,
                 Inflation, STOXX50, InterestRate) %>%
   mutate(DAX = log(DAX/lag(DAX)), WIG = log(WIG/lag(WIG)),
-         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/1000000) %>%
+         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/10000000) %>%
   slice(-1) %>% filter(across(everything(), complete.cases))
 
 monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>% 
@@ -111,8 +111,12 @@ VARselect(monthly_data[,c(4:5,9,11,12)], lag.max = 15, type="const")
 model <- VAR(monthly_data[,c(4:5,9,11,12)], p = 2, type = "const")
 =======
 VARselect(monthly_data[,c(2:5,9,11:12)], lag.max = 15, type="const")
+<<<<<<< HEAD
 model <- VAR(monthly_data[,c(2:5,9,11:12)], p = 2, type = "const")
 >>>>>>> 1aafd61c5f828869fbe4f727bcd7e30b6bc158b7
+=======
+model <- vars::VAR(monthly_data[,c(2:5,9,11:12)], p = 2, type = "const")
+>>>>>>> b4b768f1b6318bf9535366c85c3547ee01357f53
 summary(model)
 
 coeffs <- coefficients(model)
@@ -129,6 +133,7 @@ cftest <- coeftest(model, vcov = nw)
 
 causality(model, cause = "STOXX50", vcov. = nw)
 
+granger_causality(model)
 
 (2*(1-pnorm(abs(cftest[,1]/cftest[,2])))<=0.1)
 2*(1-pt(0.0012708/0.00060369, df = 212))
@@ -171,6 +176,10 @@ arch.test(model)
 serial.test(model)
 Box.test(residuals(model)[,3])
 causality(model, cause = "DAX")
+
+library(bruceR)
+granger <- granger_causality(model)
+granger$result
 
 plot(daily_data$Vol_PL, type = "l")
 # impact of volume on DAX and WIG
