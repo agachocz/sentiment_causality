@@ -135,10 +135,7 @@ normality.test(model, multivariate.only = T) # nie przechodzi
 arch.test(model) # heteroskedastyczność
 serial.test(model) # przechodzi
 
-feir <- irf(model, impulse = "CS", response = "STOXX50",
-            n.ahead = 10, ortho = F, runs = 10000, ci = 0.9, cumulative = T)
 
-plot(feir)
 
 # Granger
 
