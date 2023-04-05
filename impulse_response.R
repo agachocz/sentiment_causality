@@ -1,12 +1,6 @@
 # Impulse response function
 feir <- irf(model, n.ahead = 12, ortho = F, runs = 1000, ci = 0.9)
 
-plot(feir)
-
-plot(feir$irf$CS[,2])
-lines(feir$Lower$CS[,2], col = "red")
-lines(feir$Upper$CS[,2], col = "red")
-
 # plots
 
 # Impulse from CS
@@ -103,3 +97,83 @@ from_WIG %>% filter(to != "WIG") %>%
   theme_minimal() + theme(legend.position = "none") +
   labs(title = "Response to the impulse from WIG", 
        x = "Months after impulse", y = "Change")
+
+
+
+### FOR DAILY DATA ###
+# Impulse response function
+feir_d <- irf(model_d, n.ahead = 20, ortho = F, runs = 1000, ci = 0.9)
+
+# plots
+
+# Impulse from DAX
+from_DAX_main <- feir_d$irf$DAX %>% as.data.frame() %>% cbind(day = 0:20) %>% 
+  pivot_longer(-day, names_to = "to") %>% 
+  mutate(line = "main")
+from_DAX_lower <- feir_d$Lower$DAX %>% as.data.frame() %>% cbind(day = 0:20) %>%
+  pivot_longer(-day, 
+               names_to = "to") %>% mutate(line = "lower")
+from_DAX_upper <- feir_d$Upper$DAX %>% as.data.frame() %>% cbind(day = 0:20) %>% 
+  pivot_longer(-day, 
+               names_to = "to") %>% mutate(line = "upper")
+
+from_DAX <- rbind(from_DAX_lower, from_DAX_main, from_DAX_upper)
+from_DAX$to <- factor(from_DAX$to, levels = c("DAX", "WIG", "Vol_GER", "Vol_PL"))
+
+from_DAX %>% filter(to != "DAX") %>% 
+  ggplot(aes(x = day, y = value, col = line)) + geom_line() +
+  facet_wrap(~to, ncol = 1, scales = "free_y") +
+  scale_x_continuous(breaks = 0:20) +
+  scale_color_discrete(type = c("red", "black", "red")) +
+  theme_minimal() + theme(legend.position = "none") +
+  labs(title = "Response to the impulse from DAX", 
+       x = "Days after impulse", y = "Change")
+
+# Impulse from WIG
+from_WIG_main <- feir_d$irf$WIG %>% as.data.frame() %>% cbind(day = 0:20) %>% 
+  pivot_longer(-day, names_to = "to") %>% 
+  mutate(line = "main")
+from_WIG_lower <- feir_d$Lower$WIG %>% as.data.frame() %>% cbind(day = 0:20) %>%
+  pivot_longer(-day, 
+               names_to = "to") %>% mutate(line = "lower")
+from_WIG_upper <- feir_d$Upper$WIG %>% as.data.frame() %>% cbind(day = 0:20) %>% 
+  pivot_longer(-day, 
+               names_to = "to") %>% mutate(line = "upper")
+
+from_WIG <- rbind(from_WIG_lower, from_WIG_main, from_WIG_upper)
+from_WIG$to <- factor(from_WIG$to, levels = c("DAX", "WIG", "Vol_GER", "Vol_PL"))
+
+from_WIG %>% filter(to != "WIG") %>% 
+  ggplot(aes(x = day, y = value, col = line)) + geom_line() +
+  facet_wrap(~to, ncol = 1, scales = "free_y") +
+  scale_x_continuous(breaks = 0:20) +
+  scale_color_discrete(type = c("red", "black", "red")) +
+  theme_minimal() + theme(legend.position = "none") +
+  labs(title = "Response to the impulse from WIG", 
+       x = "Days after impulse", y = "Change")
+
+
+
+
+# Impulse from WIG
+from_Vol_GER_main <- feir_d$irf$Vol_GER %>% as.data.frame() %>% cbind(day = 0:20) %>% 
+  pivot_longer(-day, names_to = "to") %>% 
+  mutate(line = "main")
+from_Vol_GER_lower <- feir_d$Lower$Vol_GER %>% as.data.frame() %>% cbind(day = 0:20) %>%
+  pivot_longer(-day, 
+               names_to = "to") %>% mutate(line = "lower")
+from_Vol_GER_upper <- feir_d$Upper$Vol_GER %>% as.data.frame() %>% cbind(day = 0:20) %>% 
+  pivot_longer(-day, 
+               names_to = "to") %>% mutate(line = "upper")
+
+from_Vol_GER <- rbind(from_Vol_GER_lower, from_Vol_GER_main, from_Vol_GER_upper)
+from_Vol_GER$to <- factor(from_Vol_GER$to, levels = c("DAX", "WIG", "Vol_GER", "Vol_PL"))
+
+from_Vol_GER %>% filter(to != "Vol_GER") %>% 
+  ggplot(aes(x = day, y = value, col = line)) + geom_line() +
+  facet_wrap(~to, ncol = 1, scales = "free_y") +
+  scale_x_continuous(breaks = 0:20) +
+  scale_color_discrete(type = c("red", "black", "red")) +
+  theme_minimal() + theme(legend.position = "none") +
+  labs(title = "Response to the impulse from Vol_GER", 
+       x = "Days after impulse", y = "Change")
