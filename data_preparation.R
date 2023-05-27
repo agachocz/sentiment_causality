@@ -60,8 +60,17 @@ zew_daily <- zew %>%
 daily_data <- full_join(daily_stocks, zew_daily, by = "Date") %>% 
   dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation) %>%
   mutate(DAX = log(DAX/lag(DAX)), WIG = log(WIG/lag(WIG)),
-         Vol_GER = (Vol_GER-lag(Vol_GER))/10000000, Vol_PL = (Vol_PL-lag(Vol_PL))/10000000) %>%
-  slice(-1) %>% filter(across(everything(), complete.cases))
+         Vol_GER = (Vol_GER/lag(Vol_GER)), Vol_PL = (Vol_PL/lag(Vol_PL))) %>%
+  slice(-1) %>% filter(if_all(everything(), complete.cases))
+
+sd_GER <- sd(daily_data$Vol_GER)
+sd_PL <- sd(daily_data$Vol_PL)
+
+daily_data <- daily_data %>% mutate(Vol_GER = if_else(Vol_GER > 6*sd_GER, 6*sd_GER, Vol_GER),
+                                    Vol_PL = if_else(Vol_PL > 6*sd_PL, 6*sd_PL, Vol_PL)) %>%
+  mutate(Vol_GER = if_else(Vol_GER < -6*sd_GER, -6*sd_GER, Vol_GER),
+         Vol_PL = if_else(Vol_PL < -6*sd_PL, -6*sd_PL, Vol_PL))
+
 
 monthly_data <- full_join(monthly_stocks, zew, by = "Date") %>% 
   dplyr::select(Date, DAX, WIG, Vol_GER, Vol_PL, EconomicGrowth, CurrentSituation,
@@ -103,7 +112,7 @@ cftest <- coeftest(model, vcov = nw)
 
 causality(model, cause = "STOXX50", vcov. = nw)
 
-granger_causality(model)
+granger_causality(model, vcov. = nw)
 
 (2*(1-pnorm(abs(cftest[,1]/cftest[,2])))<=0.1)
 2*(1-pt(0.0012708/0.00060369, df = 212))
@@ -134,20 +143,29 @@ monthly_data %>% dplyr::select(Date, EconomicGrowth, CurrentSituation, Inflation
 
 
 # check if volume impacts DAX with daily data
-VARselect(daily_data[,c(2:5)], lag.max = 30, type="const")
+VARselect(daily_data[,c(2:5)], lag.max = 20, type="const")
 model_d <- VAR(daily_data[,c(2:5)], p = 4, type = "const")
 
-summary(model)
+summary(model_d)
 
 arch.test(model_d)
-serial.test(model_d)
-Box.test(residuals(model)[,3])
-causality(model, cause = "DAX")
+serial.test(model_d, lags.bg = 4)
+Box.test(residuals(model)[,4])
+causality(model, cause = "Vol_GER")
+plot(model_d)
+
+nw <- vcovHC(model_d)
+cftest <- coeftest(model_d, vcov = nw)
+causality(model_d, cause = "Vol_PL", vcov. = nw)
+
+# ważona MNK
+
 
 library(bruceR)
-granger <- granger_causality(model_d)
+granger <- granger_causality(cftest)
 granger$result
 
 plot(daily_data$Vol_PL, type = "l")
 # impact of volume on DAX and WIG
 
+cor(monthly_data$Vol_GER, monthly_data$STOXX50)
